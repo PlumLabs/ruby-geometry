@@ -13,25 +13,13 @@ module Geometry
     def bounding_box
       leftbottom = Point vertices.map(&:x).min, vertices.map(&:y).min
       righttop = Point vertices.map(&:x).max, vertices.map(&:y).max
-
+      
       BoundingBox.new leftbottom, righttop
     end
 
     def contains?(point)
-      # Algorithm source:
-      # https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
-
-      result = false
-
-      vertices.each_with_index do |vertex, i|
-        previous_vertex = vertices[i - 1] || vertex.last
-        if ((vertex.y > point.y) != (previous_vertex.y > point.y)) &&
-            (point.x < (previous_vertex.x - vertex.x) * (point.y - vertex.y) / (previous_vertex.y - vertex.y) + vertex.x)
-          result = !result
-        end
-      end
-
-      result
+      point_in_polygon = PointInPolygon.new(point, self)
+      point_in_polygon.inside? || point_in_polygon.on_the_boundary?
     end
 
     def area

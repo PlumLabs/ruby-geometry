@@ -1,7 +1,7 @@
 module Geometry
   class PointInPolygon < Struct.new(:point, :polygon)
     extend Memoist
-    
+
     def inside?
       point_location == :inside
     end
@@ -18,7 +18,7 @@ module Geometry
       return :outside unless bounding_box.contains?(point)
       return :on_the_boundary if point_is_vertex? || point_on_edge?
 
-      intersection_count(choose_good_ray).odd? ? :inside : :outside
+      point_inside_polygon? ? :inside : :outside
     end
 
     delegate :vertices, :edges, :bounding_box, :to => :polygon
@@ -34,31 +34,21 @@ module Geometry
       edges.any? { |edge| edge.contains_point?(point) }
     end
 
-    def choose_good_ray
-      ray = random_ray
-      while ! good_ray?(ray) do
-        ray = random_ray
+    def point_inside_polygon?
+      # Algorithm source:
+      # https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
+
+      result = false
+
+      vertices.each_with_index do |vertex, i|
+        previous_vertex = vertices[i - 1] || vertex.last
+        if ((vertex.y > point.y) != (previous_vertex.y > point.y)) &&
+            (point.x < (previous_vertex.x - vertex.x) * (point.y - vertex.y) / (previous_vertex.y - vertex.y) + vertex.x)
+          result = !result
+        end
       end
-      ray
-    end
 
-    def good_ray?(ray)
-      edges.none? { |edge| !edge.length.zero? && edge.parallel_to?(ray) } && vertices.none? { |vertex| ray.contains_point?(vertex) }
-    end
-    
-    def intersection_count(ray)
-      edges.select { |edge| edge.intersects_with?(ray) }.size
-    end
-    
-    def random_ray
-      random_direction = rand * (2 * Math::PI)
-      
-      ray_endpoint = Point sufficient_ray_radius * Math.cos(random_direction), sufficient_ray_radius * Math.sin(random_direction)
-      Segment point, ray_endpoint
-    end
-
-    def sufficient_ray_radius
-      @sufficient_ray_radius ||= bounding_box.diagonal.length * 2
+      result
     end
   end
 end
