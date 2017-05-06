@@ -43,7 +43,8 @@ module Geometry
       vertices.each_with_index do |vertex, i|
         previous_vertex = vertices[i - 1] || vertex.last
         if ((vertex.y > point.y) != (previous_vertex.y > point.y)) &&
-            (point.x < (previous_vertex.x - vertex.x) * (point.y - vertex.y) / (previous_vertex.y - vertex.y) + vertex.x)
+           (point.x < (previous_vertex.x - vertex.x) * (point.y - vertex.y) /
+            (previous_vertex.y - vertex.y) + vertex.x)
           result = !result
         end
       end
